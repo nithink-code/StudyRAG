@@ -13,6 +13,12 @@ from custom_types import RAGChunkAndSrc, RAGUpsertResult, RAGSearchResult, RAGQu
 
 load_dotenv()
 
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"status": "ok", "service": "StudyRAG API"}
+
 inngest_client = inngest.Inngest(
     app_id="study-rag",
     logger=logging.getLogger("uvicorn"),
@@ -105,8 +111,6 @@ async def rag_query_pdf_ai(ctx: inngest.Context):
         "sources":found["sources"],
         "num_contexts":len(found["contexts"])
     }
-
-app = FastAPI()
 
 inngest.fast_api.serve(app, inngest_client, [rag_ingest_pdf, rag_query_pdf_ai])
 
