@@ -15,7 +15,12 @@ st.set_page_config(page_title="RAG Ingest PDF", page_icon="📄", layout="center
 
 @st.cache_resource
 def get_inngest_client() -> inngest.Inngest:
-    return inngest.Inngest(app_id="study-rag", is_production=False)
+    return inngest.Inngest(
+        app_id="study-rag", 
+        is_production=os.getenv("INNGEST_DEV") is None,
+        signing_key=os.getenv("INNGEST_SIGNING_KEY"),
+        event_key=os.getenv("INNGEST_EVENT_KEY")
+    )
 
 
 def save_uploaded_pdf(file) -> Path:
@@ -27,14 +32,14 @@ def save_uploaded_pdf(file) -> Path:
     return file_path
 
 
-async def send_rag_ingest_event(pdf_path: Path) -> None:
+async def send_rag_ingest_event(pdf_text: str, file_name: str) -> None:
     client = get_inngest_client()
     await client.send(
         inngest.Event(
             name="rag/ingest-pdf",
             data={
-                "pdf_path": str(pdf_path.resolve()),
-                "source_id": pdf_path.name,
+                "text": pdf_text,
+                "source_id": file_name,
             },
         )
     )
@@ -45,12 +50,22 @@ uploaded = st.file_uploader("Choose a PDF", type=["pdf"], accept_multiple_files=
 
 if uploaded is not None:
     with st.spinner("Uploading and triggering ingestion..."):
-        path = save_uploaded_pdf(uploaded)
-        # Kick off the event and block until the send completes
-        asyncio.run(send_rag_ingest_event(path))
+        # Extract text from PDF
+        try:
+             import pypdf
+             reader = pypdf.PdfReader(uploaded)
+             text = ""
+             for page in reader.pages:
+                 text += page.extract_text() + "\n"
+             
+             asyncio.run(send_rag_ingest_event(text, uploaded.name))
+        except ImportError:
+            st.error("pypdf is not installed. Please add 'pypdf' to requirements.txt")
+        except Exception as e:
+            st.error(f"Error processing PDF: {e}")
         # Small pause for user feedback continuity
         time.sleep(0.3)
-    st.success(f"Triggered ingestion for: {path.name}")
+    st.success(f"Triggered ingestion for: {uploaded.name}")
     st.caption("You can upload another PDF if you like.")
 
 st.divider()
@@ -74,12 +89,17 @@ async def send_rag_query_event(question: str, top_k: int) -> None:
 
 def _inngest_api_base() -> str:
     # Local dev server default; configurable via env
-    return os.getenv("INNGEST_API_BASE", "http://127.0.0.1:8288/v1")
+    return os.getenv("INNGEST_API_BASE", "https://api.inngest.com/v1")
 
 
 def fetch_runs(event_id: str) -> list[dict]:
     url = f"{_inngest_api_base()}/events/{event_id}/runs"
-    resp = requests.get(url)
+    headers = {}
+    signing_key = os.getenv("INNGEST_SIGNING_KEY")
+    if signing_key:
+        headers["Authorization"] = f"Bearer {signing_key}"
+    
+    resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     data = resp.json()
     return data.get("data", [])

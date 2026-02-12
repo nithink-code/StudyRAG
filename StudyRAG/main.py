@@ -7,7 +7,7 @@ from inngest.experimental import ai
 import uuid
 import os
 import datetime
-from data_loader import load_and_chunk_pdf, embed_texts
+import data_loader
 from vector_db import QdrantStorage
 from custom_types import RAGChunkAndSrc, RAGUpsertResult, RAGSearchResult, RAGQueryResult
 
@@ -16,7 +16,9 @@ load_dotenv()
 inngest_client = inngest.Inngest(
     app_id="study-rag",
     logger=logging.getLogger("uvicorn"),
-    is_production = False
+    is_production=os.getenv("INNGEST_DEV") is None,
+    signing_key=os.getenv("INNGEST_SIGNING_KEY"),
+    event_key=os.getenv("INNGEST_EVENT_KEY")
 )
 
 # Define an Inngest function to handle the "user_message" event
@@ -26,9 +28,17 @@ inngest_client = inngest.Inngest(
 )
 async def rag_ingest_pdf(ctx: inngest.Context):
     def _load(ctx: inngest.Context) -> dict:
+        # Check if text is provided directly (Cloud/Vercel deployment)
+        if "text" in ctx.event.data:
+            text = ctx.event.data["text"]
+            source_id = ctx.event.data.get("source_id", "uploaded_text")
+            chunks = data_loader.chunk_text(text)
+            return RAGChunkAndSrc(chunks=chunks, source_id=source_id).model_dump()
+            
+        # Fallback to local file path (Local development)
         pdf_path = ctx.event.data["pdf_path"]
         source_id = ctx.event.data.get("source_id", pdf_path)
-        chunks = load_and_chunk_pdf(pdf_path)
+        chunks = data_loader.load_and_chunk_pdf(pdf_path)
         return RAGChunkAndSrc(chunks=chunks, source_id=source_id).model_dump()
     
 

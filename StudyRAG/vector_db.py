@@ -1,9 +1,13 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct, SearchRequest
+import os
 
 class QdrantStorage:
-    def __init__(self, url="http://localhost:6333", collection_name="docs",dim=1536):
-        self.client = QdrantClient(url=url, timeout=30)
+    def __init__(self, collection_name="docs",dim=1536):
+        url = os.getenv("QDRANT_URL", "http://localhost:6333")
+        api_key = os.getenv("QDRANT_API_KEY")
+        
+        self.client = QdrantClient(url=url, api_key=api_key, timeout=30)
         self.collection_name = collection_name
         if not self.client.collection_exists(collection_name):
             self.client.create_collection(

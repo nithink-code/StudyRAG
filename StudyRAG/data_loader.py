@@ -31,6 +31,9 @@ def load_and_chunk_pdf(file: str):
         chunks.extend(splitter.split_text(t))
     return chunks
 
+def chunk_text(text: str) -> list[str]:
+    return splitter.split_text(text)
+
 def embed_texts(texts: list[str]) -> list[list[float]]:
     response = client.embeddings.create(
         model=EMBED_MODEL,
