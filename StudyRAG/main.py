@@ -45,7 +45,7 @@ async def rag_ingest_pdf(ctx: inngest.Context):
     def _upsert(chunks_and_src: dict) -> dict:
         chunks = chunks_and_src["chunks"]
         source_id = chunks_and_src["source_id"]
-        vecs = embed_texts(chunks)
+        vecs = data_loader.embed_texts(chunks)
         ids = [str(uuid.uuid5(uuid.NAMESPACE_URL, f"{source_id}_{i}")) for i in range(len(chunks))]
         payloads = [{"source": source_id, "text": chunks[i]} for i in range(len(chunks))]
         QdrantStorage().upsert(ids, vecs, payloads)
@@ -62,7 +62,7 @@ async def rag_ingest_pdf(ctx: inngest.Context):
 
 async def rag_query_pdf_ai(ctx: inngest.Context):
     def _search(question: str, top_k: int = 5) -> dict:
-        query_vec = embed_texts([question])[0]
+        query_vec = data_loader.embed_texts([question])[0]
         store = QdrantStorage()
         found = store.search(query_vec, top_k)
         return RAGSearchResult(contexts=found["contexts"],sources=found["sources"]).model_dump()
