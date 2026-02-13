@@ -26,7 +26,9 @@ st.set_page_config(
 
 # --- Load Custom CSS ---
 def local_css(file_name):
-    with open(file_name, encoding="utf-8") as f:
+    # Resolve path relative to this script file to avoid CWD issues
+    css_file = Path(__file__).parent / file_name
+    with open(css_file, encoding="utf-8") as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 local_css("style.css")
