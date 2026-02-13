@@ -5,5 +5,4 @@ qdrant-client
 openai
 pypdf
 uvicorn
-streamlit
 requests

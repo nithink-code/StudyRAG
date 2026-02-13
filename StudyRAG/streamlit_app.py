@@ -8,7 +8,7 @@ import streamlit as st
 import inngest
 from dotenv import load_dotenv
 
-# Try importing pypdf, show error if missing
+
 try:
     import pypdf
 except ImportError:
@@ -107,9 +107,7 @@ def wait_for_run_output(event_id: str, timeout_s: float = 120.0, poll_interval_s
         
         time.sleep(poll_interval_s)
 
-# --- UI Components ---
 
-# --- UI Components ---
 
 def show_toast(message):
     st.markdown(f"""
@@ -118,13 +116,8 @@ def show_toast(message):
         {message}
     </div>
     """, unsafe_allow_html=True)
-    # Automatically clear toast after some seconds (handled by Streamlit rerun usually, but here relies on next interaction or manual clear if we wanted)
-    # Ideally, we let it stay until the user navigates or we force a rerun after delay.
-    # For now, we will use a small sleep then rerun if we want it to disappear, 
-    # BUT the user asked for it to be displayed for success. A permanent floating toast until next action is fine.
 
 def tab_upload():
-    # Animated Border Container
     st.markdown("""
     <div class="animated-border-box">
         <div class="animated-border-box-content">
@@ -259,10 +252,8 @@ def main():
             
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Simulated Route Transition Loader
     placeholder = st.empty()
     
-    # Render Active Tab
     if st.session_state["active_tab"] == "upload":
         tab_upload()
     elif st.session_state["active_tab"] == "chat":
