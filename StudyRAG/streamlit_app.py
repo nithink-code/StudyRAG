@@ -89,7 +89,7 @@ def fetch_runs(event_id: str) -> list[dict]:
     except Exception:
         return []
 
-def wait_for_run_output(event_id: str, timeout_s: float = 120.0, poll_interval_s: float = 1.0) -> dict:
+def wait_for_run_output(event_id: str, timeout_s: float = 300.0, poll_interval_s: float = 1.0) -> dict:
     start = time.time()
     last_status = None
     while True:
