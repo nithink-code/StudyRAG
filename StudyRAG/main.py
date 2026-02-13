@@ -1,6 +1,5 @@
 import logging
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 import inngest
 import inngest.fast_api
 from dotenv import load_dotenv
@@ -15,19 +14,6 @@ from custom_types import RAGChunkAndSrc, RAGUpsertResult, RAGSearchResult, RAGQu
 load_dotenv()
 
 app = FastAPI()
-
-@app.exception_handler(404)
-async def custom_404_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=404,
-        content={
-            "message": "Not Found", 
-            "detail": "Custom 404 Handler",
-            "path": request.url.path,
-            "method": request.method,
-            "root_path": request.scope.get("root_path", "")
-        },
-    )
 
 @app.get("/")
 def read_root():
