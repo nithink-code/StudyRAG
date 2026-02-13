@@ -35,7 +35,6 @@ local_css("style.css")
 
 # --- Logic / Helpers ---
 
-@st.cache_resource
 def get_inngest_client() -> inngest.Inngest:
     return inngest.Inngest(
         app_id="study-rag", 

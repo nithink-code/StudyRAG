@@ -37,17 +37,6 @@ def recursive_split_text(text: str, chunk_size: int = 1000, chunk_overlap: int =
     
     final_chunks = []
     
-    # Very basic recursive implementation
-    # We try to split by the largest separator first
-    # If a chunk is still too big, we move to the next separator
-    
-    # This is a simplified version. For now, let's use a simpler approach:
-    # Split by full stops or newlines to get sentences/paragraphs
-    # Then group them.
-    
-    # Regex split to keep delimiters
-    # Split by sentence endings (.?!) or newlines
-    # This is a heuristic.
     
     # Alternatively, just iterate and accumulate.
     words = text.split()
@@ -61,13 +50,6 @@ def recursive_split_text(text: str, chunk_size: int = 1000, chunk_overlap: int =
             # reliable overlap Logic
             overlap_words = []
             overlap_len = 0
-            # backtrack to get overlap
-            # This is complex to get right perfectly without a library, 
-            # but we can just simplify for now: no overlap or simple overlap
-            
-            # Simple approach: start new chunk with last few words?
-            # Or just ignore overlap for now to save complexity/bugs
-            # Let's try to do a sliding window of words?
             
             current_chunk = []
             current_length = 0
