@@ -5,3 +5,6 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import app
+
+# Explicitly export app for Vercel
+__all__ = ["app"]
