@@ -42,7 +42,53 @@ class QdrantStorage:
                 sources.add(source)
         
         return {"contexts": context, "sources": list(sources)}
-
+    
+    def delete_by_source(self, source_id: str):
+        """Delete all points with a specific source_id from the collection."""
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+        
+        # Delete points where payload.source matches source_id
+        self.client.delete(
+            collection_name=self.collection_name,
+            points_selector=Filter(
+                must=[
+                    FieldCondition(
+                        key="source",
+                        match=MatchValue(value=source_id)
+                    )
+                ]
+            )
+        )
+    
+    def clear_collection(self):
+        """Delete all points from the collection."""
+        # Delete the collection and recreate it
+        self.client.delete_collection(collection_name=self.collection_name)
+        self.client.create_collection(
+            collection_name=self.collection_name,
+            vectors_config=VectorParams(size=1536, distance=Distance.COSINE)
+        )
+    
+    def get_all_sources(self):
+        """Get a list of all unique source documents in the collection."""
+        try:
+            # Scroll through all points to get unique sources
+            points, _ = self.client.scroll(
+                collection_name=self.collection_name,
+                limit=1000,
+                with_payload=True
+            )
+            
+            sources = set()
+            for point in points:
+                payload = getattr(point, "payload", None) or {}
+                source = payload.get("source", "")
+                if source:
+                    sources.add(source)
+            
+            return list(sources)
+        except Exception:
+            return []
 
 
 

@@ -164,6 +164,59 @@ def tab_upload():
                         except Exception as e:
                             status.update(label="❌ System Error", state="error")
                             st.error(f"Error processing PDF: {e}")
+    
+    # Document Management Section
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="animated-border-box">
+        <div class="animated-border-box-content">
+            <h3 style="margin-top:0;">🗂️ Manage Knowledge Base</h3>
+            <p style="color: #aaa; margin-bottom: 20px;">
+                View and manage documents currently stored in the system.
+            </p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 8, 1])
+    with col2:
+        try:
+            from vector_db import QdrantStorage
+            storage = QdrantStorage()
+            sources = storage.get_all_sources()
+            
+            if sources:
+                st.write(f"**📚 Stored Documents ({len(sources)}):**")
+                for source in sources:
+                    col_a, col_b = st.columns([7, 3])
+                    with col_a:
+                        st.write(f"• {source}")
+                    with col_b:
+                        if st.button(f"🗑️ Delete", key=f"del_{source}", use_container_width=True):
+                            with st.spinner(f"Removing {source}..."):
+                                storage.delete_by_source(source)
+                                st.success(f"✅ Deleted: {source}")
+                                time.sleep(1)
+                                st.rerun()
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("🗑️ Clear All Documents", use_container_width=True, type="secondary"):
+                    if st.session_state.get("confirm_clear"):
+                        with st.spinner("Clearing all documents..."):
+                            storage.clear_collection()
+                            st.success("✅ All documents cleared!")
+                            st.session_state["confirm_clear"] = False
+                            time.sleep(1)
+                            st.rerun()
+                    else:
+                        st.session_state["confirm_clear"] = True
+                        st.warning("⚠️ Click again to confirm deletion of ALL documents")
+                        st.rerun()
+            else:
+                st.info("📭 No documents stored yet. Upload a PDF to get started!")
+                
+        except Exception as e:
+            st.error(f"Error loading documents: {e}")
 
 def tab_chat():
     # Animated Border Container for Chat Header
