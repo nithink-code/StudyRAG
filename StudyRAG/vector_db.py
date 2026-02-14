@@ -1,19 +1,49 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct, SearchRequest
 import os
+import time
 
 class QdrantStorage:
-    def __init__(self, collection_name="docs",dim=1536):
+    def __init__(self, collection_name="docs", dim=1536, max_retries=3):
         url = os.getenv("QDRANT_URL", "http://localhost:6333")
         api_key = os.getenv("QDRANT_API_KEY")
         
-        self.client = QdrantClient(url=url, api_key=api_key, timeout=30)
-        self.collection_name = collection_name
-        if not self.client.collection_exists(collection_name):
-            self.client.create_collection(
-                collection_name=collection_name,
-                vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
-            )
+        # Retry connection logic
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                # Increased timeout and added prefer_grpc=False for better HTTP compatibility
+                self.client = QdrantClient(
+                    url=url, 
+                    api_key=api_key, 
+                    timeout=60,
+                    prefer_grpc=False  # Use HTTP instead of gRPC for better compatibility
+                )
+                self.collection_name = collection_name
+                
+                # Verify connection by checking if collection exists
+                if not self.client.collection_exists(collection_name):
+                    self.client.create_collection(
+                        collection_name=collection_name,
+                        vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
+                    )
+                
+                # If we get here, connection is successful
+                return
+                
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    # Wait before retrying (exponential backoff)
+                    time.sleep(2 ** attempt)
+                    continue
+                else:
+                    # All retries failed
+                    raise ConnectionError(
+                        f"Failed to connect to Qdrant after {max_retries} attempts. "
+                        f"Last error: {str(e)}. "
+                        f"Please check your QDRANT_URL and network connection."
+                    ) from e
     
     def upsert(self, ids, vectors, payloads):
         # Insert or update points in the collection

@@ -215,8 +215,18 @@ def tab_upload():
             else:
                 st.info("📭 No documents stored yet. Upload a PDF to get started!")
                 
+        except ConnectionError as e:
+            st.error(f"❌ **Connection Error**: {e}")
+            st.info("""
+            **Troubleshooting Steps:**
+            1. Check your internet connection
+            2. Verify `QDRANT_URL` in your `.env` file is correct
+            3. Ensure your Qdrant cloud instance is running
+            4. Check if a firewall or proxy is blocking the connection
+            """)
         except Exception as e:
-            st.error(f"Error loading documents: {e}")
+            st.error(f"❌ **Error loading documents**: {e}")
+            st.info("If this persists, try restarting the application or check your Qdrant configuration.")
 
 def tab_chat():
     # Animated Border Container for Chat Header
