@@ -1,7 +1,0 @@
-[project]
-name = "studyrag"
-version = "1.0.0"
-description = "StudyRAG - RAG-based PDF Q&A system"
-
-[project.scripts]
-app = "api.index:app"
